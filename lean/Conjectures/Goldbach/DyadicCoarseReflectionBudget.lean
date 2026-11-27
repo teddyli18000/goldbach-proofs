@@ -377,8 +377,9 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
   have hpos : 0 < (m.totient : ℝ) := by exact_mod_cast Nat.totient_pos.mpr (NeZero.pos m)
   have hoddE : (∑ a ∈ O, D a^2) ≤ 2*B^2 := by
     rw [hpv] at hsum
-    have he := (mul_le_mul_left₀ hpos).mp hsum
-    nlinarith only [he]
+    by_contra! h
+    have hbad : (2*B)^2 < 2 * ∑ a ∈ O, D a^2 := by nlinarith only [h]
+    exact (not_lt_of_ge hsum) (mul_lt_mul_of_pos_left hbad hpos)
   have hAeven (a : ℕ) (ha : Even a) : A a = if a=2 then Real.log 2 else 0 := by
     have hset : (range (N+1)).filter (fun n => n % m=a ∧ n.Prime) =
         if a=2 then {2} else ∅ := by
