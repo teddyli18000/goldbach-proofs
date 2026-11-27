@@ -351,6 +351,7 @@ theorem Conjectures.Goldbach.FareyFullSieveRemainder :
   have hcount :
       (((Finset.Icc l h).filter (fun u => u.Coprime n ∧ d ∣ u * (n - u))).card : ℝ) =
         ∑ b ∈ R, C b := by
+    dsimp only [C]
     exact_mod_cast hsum.symm
   have hr : (R.card : ℝ) = (2 : ℝ) ^ d.primeFactors.card := by
     exact_mod_cast rootCard n d hs hc
