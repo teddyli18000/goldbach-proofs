@@ -873,7 +873,7 @@ private theorem energyPoint (h : BMOR) (n q : ℕ) (β : ℝ)
         ‖S n ((i:ℝ)/q+β)-M n q β‖ ≤
           (n:ℝ)*a q+c q*(22/7)* |β| *(n:ℝ)^2/(840*34) := by
       apply (hsum i hi).trans
-      simpa [c,hsmall] using affineCompare n q β hnp hqp
+      simpa [c,hsmall,show (10:ℝ)-2=8 by norm_num,show (10:ℝ)-1=9 by norm_num] using affineCompare n q β hnp hqp
     let W := (n:ℝ)*a q+c q*(22/7)* |β| *(n:ℝ)^2/(840*34)
     calc
       _ ≤ ∑ i ∈ A q, W^2 := sum_le_sum (fun i hi => pow_le_pow_left₀ (norm_nonneg _) (hh i hi) 2)
@@ -900,7 +900,10 @@ private theorem energyPoint (h : BMOR) (n q : ℕ) (β : ℝ)
               (le_add_of_nonneg_right (sq_nonneg _))
           · rw [if_neg hc,zero_add]
             exact pow_le_pow_left₀ (norm_nonneg _) (nonunitError n q r β hq hq' (mem_range.mp hr) hc hn) 2
-        _ = _ := by rw [sum_add_distrib,← sum_filter]; simp [← A,cardA,nsmul_eq_mul]
+        _ = _ := by
+          rw [sum_add_distrib, ← sum_filter]
+          change (∑ r ∈ A q, (B n β)^2) + (∑ r ∈ range q, (δ n)^2) = _
+          rw [sum_const, sum_const, cardA, card_range, nsmul_eq_mul, nsmul_eq_mul]
     have hbudget : (q.totient:ℝ)*(B n β)^2+(q:ℝ)*(δ n)^2 ≤
         (q.totient:ℝ)*(B n β+9*δ n)^2 := by
       have hq105 : (q:ℝ) ≤ 105 := by exact_mod_cast hq'
