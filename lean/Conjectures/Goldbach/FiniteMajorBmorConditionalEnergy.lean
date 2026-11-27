@@ -513,10 +513,10 @@ private theorem threeRanges (h : BMOR) (q a n : ℕ) (β : ℝ)
     ‖∑ k ∈ Icc 1 n, (((if k % q=a then vonMangoldt k else 0) -
       1/(Nat.totient q:ℝ):ℝ):ℂ)*E ((k:ℝ)*β)‖ ≤
       (n:ℝ)*(1/(10^9:ℝ)+1/(840*42)) +
-        Real.pi*|β|*(n:ℝ)^2/(840*34) := by
+        Real.pi* |β| *(n:ℝ)^2/(840*34) := by
   let T : ℕ := 8000000000
   let L : ℕ := 600000000000000
-  let B := 2*Real.pi*|β|
+  let B := 2*Real.pi* |β|
   have hB : 0 ≤ B := by positivity
   have hnR : (4000000000000000000:ℝ) ≤ n := by exact_mod_cast hn
   have hβ' : |β| ≤ (105:ℝ)/4000000000000000000 :=
@@ -579,7 +579,7 @@ private theorem threeRanges (h : BMOR) (q a n : ℕ) (β : ℝ)
           _ ≤ ((n:ℝ)^2/2)/(840*34) := div_le_div_of_nonneg_right hs (by norm_num)
           _ = _ := by ring
   have hTailCost : B*(∑ m ∈ Ico L n, |P q a m|) ≤
-      Real.pi*|β|*(n:ℝ)^2/(840*34) := by
+      Real.pi* |β| *(n:ℝ)^2/(840*34) := by
     calc
       _ ≤ B*((n:ℝ)^2/(2*(840*34))) := mul_le_mul_of_nonneg_left htail hB
       _ = _ := by dsimp [B]; ring
@@ -608,7 +608,7 @@ private noncomputable def F (n p r : ℕ) (β : ℝ) : ℂ :=
   G n p r β - (if Nat.Coprime r p then V n β/(Nat.totient p:ℂ) else 0)
 
 private noncomputable def B (n : ℕ) (β : ℝ) : ℝ :=
-  (n:ℝ)*(1/(10^9:ℝ)+1/(840*42)) + Real.pi*|β|*(n:ℝ)^2/(840*34)
+  (n:ℝ)*(1/(10^9:ℝ)+1/(840*42)) + Real.pi* |β| *(n:ℝ)^2/(840*34)
 
 private noncomputable def δ (n : ℕ) : ℝ := (n:ℝ)/10^9
 
@@ -716,7 +716,8 @@ private theorem logSmall (n : ℕ) (hn : 4000000000000000000 ≤ n) :
     Real.log_le_sub_one_of_pos (by positivity)
   rw [Real.log_div (by positivity) (by positivity)] at hs
   unfold δ
-  linarith
+  norm_num at hs hlog ⊢
+  linarith only [hnR,hs,hlog]
 
 private theorem nonunitError (n p r : ℕ) (β : ℝ)
     (hp : 1 ≤ p) (hp' : p ≤ 105) (hr : r < p) (hc : ¬Nat.Coprime r p)
@@ -739,7 +740,9 @@ private theorem nonunitError (n p r : ℕ) (β : ℝ)
     intro hcop
     apply hc
     rw [← hkr]
-    exact (Nat.coprime_mod_left_iff).mpr hcop
+    change Nat.gcd (k % p) p = 1
+    rw [← Nat.gcd_rec p k, Nat.gcd_comm]
+    exact hcop.gcd_eq_one
   calc
     _ ≤ ∑ k ∈ (Icc 1 n).filter (fun k => k % p=r), ‖(vonMangoldt k:ℂ)*E ((k:ℝ)*β)‖ :=
       norm_sum_le _ _
@@ -757,8 +760,9 @@ private theorem nonunitError (n p r : ℕ) (β : ℝ)
 private theorem mode (p q a : ℕ) (hp : 0 < p) (hq : 0 < q) (ha : a < q)
     (hc : Nat.Coprime a q) (h : p=q ∨ (p=4 ∧ q ≤ 2)) :
     (∑ r ∈ A p, E ((a:ℝ)*(r:ℝ)/q)) = ((moebius q:ℤ):ℂ)*(p.totient:ℂ)/(q.totient:ℂ) := by
-  rcases h with rfl | ⟨rfl,hsmall⟩
-  · have he : ∀ r : ℕ, E ((a:ℝ)*(r:ℝ)/q) =
+  rcases h with hpq | ⟨rfl,hsmall⟩
+  · subst p
+    have he : ∀ r : ℕ, E ((a:ℝ)*(r:ℝ)/q) =
         Complex.exp (Complex.I*((2*Real.pi*(a:ℝ)*(r:ℝ)/(q:ℝ):ℝ):ℂ)) := by
       intro r
       unfold E
@@ -790,7 +794,7 @@ private theorem mode (p q a : ℕ) (hp : 0 < p) (hq : 0 < q) (ha : a < q)
         · norm_num at hc
         · rfl
       subst a
-      have hμ : moebius 2 = -1 := by decide
+      have hμ : moebius 2 = -1 := ArithmeticFunction.moebius_apply_prime Nat.prime_two
       have hφ : Nat.totient 2 = 1 := by decide
       norm_num [hμ,hφ,hEhalf,hEthree]
 
@@ -810,7 +814,7 @@ private theorem errorGroup (n p q a : ℕ) (β : ℝ)
         intro r hr
         split_ifs <;> simp
       _ = (V n β/(p.totient:ℂ))*(∑ r ∈ A p, E ((a:ℝ)*(r:ℝ)/q)) := by rw [mul_sum]
-      _ = _ := by rw [mode p q a hp hq ha hc h]; unfold M; field_simp; ring
+      _ = _ := by rw [mode p q a hp hq ha hc h]; unfold M; field_simp <;> ring
   unfold F
   simp_rw [sub_mul]
   rw [sum_sub_distrib,he]
@@ -819,21 +823,21 @@ private theorem Blarge (n : ℕ) (β : ℝ) :
     100*δ n ≤ B n β := by
   unfold B δ
   have hn : (0:ℝ) ≤ n := by positivity
-  have hp : 0 ≤ Real.pi*|β|*(n:ℝ)^2/(840*34) := by positivity
+  have hp : 0 ≤ Real.pi* |β| *(n:ℝ)^2/(840*34) := by positivity
   linarith
 
 private theorem affineCompare (n q : ℕ) (β : ℝ) (hn : 0 < n) (hq : 0 < q) :
-    c q*B n β + (10-c q)*δ n ≤ (n:ℝ)*a q + c q*(22/7)*|β|*(n:ℝ)^2/(840*34) := by
+    c q*B n β + (10-c q)*δ n ≤ (n:ℝ)*a q + c q*(22/7)* |β| *(n:ℝ)^2/(840*34) := by
   have hc : 0 ≤ c q := by unfold c; split_ifs <;> norm_num
   have h := mul_le_mul_of_nonneg_right piBound
-      (show 0 ≤ c q*|β|*(n:ℝ)^2/(840*34) by positivity)
+      (show 0 ≤ c q* |β| *(n:ℝ)^2/(840*34) by positivity)
   unfold B δ a
-  linarith only [h]
+  nlinarith only [h]
 
 private theorem energyPoint (h : BMOR) (n q : ℕ) (β : ℝ)
     (hn : 4000000000000000000 ≤ n) (hq : 1 ≤ q) (hq' : q ≤ 105) (hb : |β| ≤ H n q) :
     (∑ i ∈ A q, ‖S n ((i:ℝ)/q+β)-M n q β‖^2) ≤
-      (q:ℝ)*(q.totient:ℝ)*((n:ℝ)*a q + c q*(22/7)*|β|*(n:ℝ)^2/(840*34))^2 := by
+      (q:ℝ)*(q.totient:ℝ)*((n:ℝ)*a q + c q*(22/7)* |β| *(n:ℝ)^2/(840*34))^2 := by
   have hnp : 0 < n := by omega
   have hqp : 0 < q := by omega
   have hnR : (0:ℝ) < n := by positivity
@@ -867,10 +871,10 @@ private theorem energyPoint (h : BMOR) (n q : ℕ) (β : ℝ)
         _ ≤ _ := by linarith
     have hh (i : ℕ) (hi : i ∈ A q) :
         ‖S n ((i:ℝ)/q+β)-M n q β‖ ≤
-          (n:ℝ)*a q+c q*(22/7)*|β|*(n:ℝ)^2/(840*34) := by
+          (n:ℝ)*a q+c q*(22/7)* |β| *(n:ℝ)^2/(840*34) := by
       apply (hsum i hi).trans
       simpa [c,hsmall] using affineCompare n q β hnp hqp
-    let W := (n:ℝ)*a q+c q*(22/7)*|β|*(n:ℝ)^2/(840*34)
+    let W := (n:ℝ)*a q+c q*(22/7)* |β| *(n:ℝ)^2/(840*34)
     calc
       _ ≤ ∑ i ∈ A q, W^2 := sum_le_sum (fun i hi => pow_le_pow_left₀ (norm_nonneg _) (hh i hi) 2)
       _ = (q.totient:ℝ)*W^2 := by simp [cardA,nsmul_eq_mul]
@@ -906,7 +910,7 @@ private theorem energyPoint (h : BMOR) (n q : ℕ) (β : ℝ)
         nlinarith only [h1,sq_nonneg (δ n)]
       have h3 := mul_le_mul_of_nonneg_right hφ (show 0 ≤ (B n β+9*δ n)^2-(B n β)^2 by linarith [h2,sq_nonneg (δ n)])
       nlinarith only [h0,h2,h3]
-    have hcomp : B n β+9*δ n ≤ (n:ℝ)*a q+c q*(22/7)*|β|*(n:ℝ)^2/(840*34) := by
+    have hcomp : B n β+9*δ n ≤ (n:ℝ)*a q+c q*(22/7)* |β| *(n:ℝ)^2/(840*34) := by
       simpa [c,hsmall] using affineCompare n q β hnp hqp
     calc
       _ = ∑ i ∈ A q, ‖∑ r ∈ range q, F n q r β*ph q i r‖^2 := by
@@ -941,22 +945,24 @@ private theorem polyIntegral (X Y l u : ℝ) :
   ring
 
 private theorem absIntegral (X Y h : ℝ) (hh : 0 ≤ h) :
-    (∫ t in -h..h, (X+Y*|t|)^2) =
+    (∫ t in -h..h, (X+Y* |t|)^2) =
       2*h*(X^2+X*Y*h+Y^2*h^2/3) := by
-  have hneg : (∫ t in -h..0, (X+Y*|t|)^2) =
+  have hneg : (∫ t in -h..0, (X+Y* |t|)^2) =
       ∫ t in -h..0, (X+(-Y)*t)^2 := by
     apply intervalIntegral.integral_congr
     intro t ht
     rw [Set.uIcc_of_le (by linarith : -h ≤ 0)] at ht
+    dsimp only
     rw [abs_of_nonpos ht.2]
     ring
-  have hpos : (∫ t in 0..h, (X+Y*|t|)^2) =
+  have hpos : (∫ t in 0..h, (X+Y* |t|)^2) =
       ∫ t in 0..h, (X+Y*t)^2 := by
     apply intervalIntegral.integral_congr
     intro t ht
     rw [Set.uIcc_of_le hh] at ht
+    dsimp only
     rw [abs_of_nonneg ht.1]
-  have hf : Continuous (fun t : ℝ => (X+Y*|t|)^2) := by fun_prop
+  have hf : Continuous (fun t : ℝ => (X+Y* |t|)^2) := by fun_prop
   rw [← intervalIntegral.integral_add_adjacent_intervals (hf.intervalIntegrable (-h) 0)
     (hf.intervalIntegrable 0 h),hneg,hpos,polyIntegral,polyIntegral]
   ring
@@ -976,11 +982,11 @@ private theorem energyIntegral (h : BMOR) (n q : ℕ)
     unfold g S M V E
     fun_prop
   have hsum : Continuous (fun β : ℝ => ∑ i ∈ A q,g i β) := by fun_prop
-  have hp : Continuous (fun β : ℝ => (q:ℝ)*(q.totient:ℝ)*(X+Y*|β|)^2) := by fun_prop
+  have hp : Continuous (fun β : ℝ => (q:ℝ)*(q.totient:ℝ)*(X+Y* |β|)^2) := by fun_prop
   change (∑ i ∈ A q, ∫ β in -hq0..hq0, g i β) ≤ _
   rw [← intervalIntegral.integral_finsetSum (fun i _ => (hg i).intervalIntegrable (-hq0) hq0)]
   calc
-    _ ≤ ∫ β in -hq0..hq0, (q:ℝ)*(q.totient:ℝ)*(X+Y*|β|)^2 := by
+    _ ≤ ∫ β in -hq0..hq0, (q:ℝ)*(q.totient:ℝ)*(X+Y* |β|)^2 := by
       apply intervalIntegral.integral_mono_on (by linarith) (hsum.intervalIntegrable _ _) (hp.intervalIntegrable _ _)
       intro β hβ
       have hb : |β| ≤ H n q := abs_le.mpr hβ
@@ -994,7 +1000,7 @@ private theorem energyIntegral (h : BMOR) (n q : ℕ)
         field_simp [hn0,hq0'] <;> ring
       have hQ : (q:ℝ)*2*hq0*(n:ℝ) = 210 := by
         dsimp [hq0,H]
-        field_simp [hn0,hq0']
+        field_simp [hn0,hq0'] <;> norm_num
       have he : X^2+X*Y*hq0+Y^2*hq0^2/3 =
           (n:ℝ)^2*(a q^2+a q*d q+d q^2/3) := by
         calc
@@ -1329,7 +1335,8 @@ private theorem budget_le_upper (q : ℕ) (hq : 1 ≤ q) (hq' : q ≤ 105) :
   · have hφ : Nat.totient 105 = 48 := by decide
     norm_num [budget,a,d,c,upper,hφ]
 
-set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 8192 in
+set_option maxHeartbeats 8000000 in
 private theorem numericBudget :
     (∑ q ∈ Icc 1 105, budget q) < (3/40:ℝ) := by
   have hsum : (∑ q ∈ Icc 1 105, upper q) = 7331216 := by decide
@@ -1344,6 +1351,7 @@ end Conjectures.Goldbach.FiniteMajorBmorConditionalEnergyAux
 
 open Conjectures.Goldbach.FiniteMajorBmorConditionalEnergyAux
 
+set_option maxRecDepth 8192 in
 set_option maxHeartbeats 4000000 in
 theorem Conjectures.Goldbach.FiniteMajorBmorConditionalEnergy :
     (∀ (q a m : ℕ), 3 ≤ q → q ≤ 105 → a < q → Nat.Coprime a q → 8000000000 ≤ m →
@@ -1371,7 +1379,8 @@ theorem Conjectures.Goldbach.FiniteMajorBmorConditionalEnergy :
   change (∑ q ∈ Icc 1 105, ∑ i ∈ A q, ∫ β in -(H n q)..H n q,
     ‖S n ((i:ℝ)/q+β)-M n q β‖^2) ≤ (n:ℝ)*∑ q ∈ Icc 1 105,budget q ∧
       (∑ q ∈ Icc 1 105,budget q) < (3/40:ℝ)
-  refine ⟨?_,numericBudget⟩
-  rw [mul_sum]
-  exact sum_le_sum (fun q hq => energyIntegral h n q hn (mem_Icc.mp hq).1 (mem_Icc.mp hq).2)
+  constructor
+  · rw [mul_sum]
+    exact sum_le_sum (fun q hq => energyIntegral h n q hn (mem_Icc.mp hq).1 (mem_Icc.mp hq).2)
+  · exact numericBudget
 
