@@ -265,7 +265,7 @@ theorem log_series32 (u : ℝ) (hu : 0 ≤ u) (hu' : u ≤ 1/3) :
     calc
       _ ≤ 2*u^(2*(k+32)+1) := by
         have h := mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hf (by norm_num : (0:ℝ) ≤ 2))
-          (pow_nonneg hu _)
+          (pow_nonneg hu (2*(k+32)+1))
         simpa only [mul_one] using h
       _ ≤ 2*(1/3:ℝ)^(2*(k+32)+1) :=
         mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hu hu' _) (by norm_num)
