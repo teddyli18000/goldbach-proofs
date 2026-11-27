@@ -259,7 +259,7 @@ theorem log_series32 (u : ℝ) (hu : 0 ≤ u) (hu' : u ≤ 1/3) :
   have hg : HasSum g ((2*(1/3)^65)*((1-(1/9:ℝ))⁻¹)) := hg0.mul_left _
   have hterm (k : ℕ) : f (k+32) ≤ g k := by
     unfold f g
-    have hd : 1 ≤ 2*((k+32:ℕ):ℝ)+1 := by positivity
+    have hd : 1 ≤ 2*((k+32:ℕ):ℝ)+1 := by linarith [show (0:ℝ) ≤ ((k+32:ℕ):ℝ) by positivity]
     have hf : (1:ℝ)/(2*((k+32:ℕ):ℝ)+1) ≤ 1 :=
       (div_le_one (by positivity)).2 hd
     calc
@@ -271,7 +271,7 @@ theorem log_series32 (u : ℝ) (hu : 0 ≤ u) (hu' : u ≤ 1/3) :
         mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hu hu' _) (by norm_num)
       _ = _ := by
         rw [show 2*(k+32)+1=65+2*k by omega,pow_add,pow_mul]
-        norm_num
+        norm_num <;> ring
   have ht' : (∑' k : ℕ, f (k+32)) ≤ (2*(1/3)^65)*((1-(1/9:ℝ))⁻¹) := by
     rw [← hg.tsum_eq]
     exact ht.tsum_le_tsum hterm hg.summable
