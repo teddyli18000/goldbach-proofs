@@ -252,12 +252,12 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
       ((a+q : ℕ) : ZMod m) = (a : ZMod m) * ((1+q : ℕ) : ZMod m) := by
     obtain ⟨j,hj⟩ := ha
     have he : a*(1+q) = a+q+m*j := by rw [hm,hj]; ring
-    rw [← Nat.cast_mul, he, Nat.cast_add, Nat.cast_mul, ZMod.natCast_self, zero_mul, add_zero]
+    rw [← Nat.cast_mul, he]
+    simp only [Nat.cast_add, Nat.cast_mul, ZMod.natCast_self, zero_mul, add_zero]
   let z (χ : DirichletCharacter ℂ m) : ℂ := χ ((1+q : ℕ) : ZMod m)
   have hzsq (χ : DirichletCharacter ℂ m) : z χ ^ 2 = 1 := by
     have ho : Odd (1+q) := by
-      rw [Nat.odd_iff, Nat.add_mod, Nat.even_iff.mp hqe]
-      norm_num
+      rw [Nat.odd_iff, Nat.add_mod, Nat.even_iff.mp hqe] <;> norm_num
     have he := hshift (1+q) ho
     have he' : (((1+q)+q : ℕ) : ZMod m) = 1 := by
       rw [show 1+q+q=1+m by omega, Nat.cast_add, Nat.cast_one, ZMod.natCast_self, add_zero]
@@ -325,8 +325,10 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
       rw [star_sum]
       apply sum_congr rfl
       intro n hn
-      rw [star_mul]
-      simp [Complex.star_def]
+      have hx : star ((Real.log (n : ℝ) : ℂ)) = (Real.log (n : ℝ) : ℂ) := by
+        rw [Complex.star_def, Complex.conj_ofReal]
+      rw [star_mul, hx]
+      ring
     change ‖∑ n ∈ (range (N+1)).filter Nat.Prime,
       (Real.log (n : ℝ) : ℂ)*star (χ (n : ZMod m))‖ ≤ B at h
     rwa [he, norm_star] at h
@@ -375,7 +377,7 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
   have hpos : 0 < (m.totient : ℝ) := by exact_mod_cast Nat.totient_pos.mpr (NeZero.pos m)
   have hoddE : (∑ a ∈ O, D a^2) ≤ 2*B^2 := by
     rw [hpv] at hsum
-    have he := (mul_le_mul_left hpos).mp hsum
+    have he := (mul_le_mul_left₀ hpos).mp hsum
     nlinarith only [he]
   have hAeven (a : ℕ) (ha : Even a) : A a = if a=2 then Real.log 2 else 0 := by
     have hset : (range (N+1)).filter (fun n => n % m=a ∧ n.Prime) =
@@ -383,14 +385,15 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
       ext n
       by_cases h : a=2
       · subst a
-        simp only [if_pos rfl,mem_filter,mem_range,mem_singleton]
+        rw [show (if (2 : ℕ) = 2 then ({2} : Finset ℕ) else ∅) = {2} by decide]
+        simp only [mem_filter,mem_range,mem_singleton]
         constructor
         · rintro ⟨_, hmod, hp⟩
           rcases hp.eq_two_or_odd with he | ho
           · exact he
           · have hh := Nat.mod_mod_of_dvd n (show 2 ∣ m by rw [hm]; exact dvd_mul_right 2 q)
             rw [hmod] at hh
-            have hodd := Nat.odd_iff.mp ho
+            have hodd := ho
             omega
         · rintro rfl
           exact ⟨by omega,Nat.mod_eq_of_lt (by omega),Nat.prime_two⟩
@@ -402,7 +405,7 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
           exact h hmod.symm
         · have hh := Nat.mod_mod_of_dvd n (show 2 ∣ m by rw [hm]; exact dvd_mul_right 2 q)
           rw [hmod,Nat.even_iff.mp ha] at hh
-          have hodd := Nat.odd_iff.mp ho
+          have hodd := ho
           omega
     dsimp only [A]
     rw [hset]
@@ -432,10 +435,11 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
       _ = _ := by simp [Nat.mod_lt 2 hq]
   have hsplit : (∑ a ∈ range q,D a^2) =
       (∑ a ∈ O,D a^2) + ∑ a ∈ (range q).filter Even,D a^2 := by
-    rw [← sum_filter_add_sum_filter_not (range q) Odd]
-    congr 1
-    ext a
-    simp [Nat.not_odd_iff_even]
+    have he : (range q).filter (fun a => ¬ Odd a) = (range q).filter Even := by
+      ext a
+      simp [Nat.not_odd_iff_even]
+    rw [← he]
+    exact (sum_filter_add_sum_filter_not (range q) Odd (fun a => D a^2)).symm
   simpa only [D,A,hm,q] using (show (∑ a ∈ range q,D a^2) ≤ 2*B^2+(Real.log 2)^2 by
     rw [hsplit]
     linarith only [hoddE,hEvenE])
