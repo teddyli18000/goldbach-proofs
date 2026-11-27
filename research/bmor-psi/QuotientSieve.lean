@@ -152,7 +152,7 @@ theorem weighted_recurrence (q p v r : ℕ) (hp : p.Prime) (hc : p.Coprime q)
     have hkpos : 0 < k := by
       have h := (mem_Icc.mp (mem_filter.mp hk).1).1
       exact hp.pos.trans_le h
-    rw [Nat.cast_mul,Real.log_mul (by positivity) (by positivity),add_comm]
+    rw [Nat.cast_mul,Real.log_mul (by exact_mod_cast hp.ne_zero) (by exact_mod_cast hkpos.ne'),add_comm]
   rw [sum_congr rfl hterm,sum_add_distrib,sum_const, nsmul_eq_mul, source_diff q p v r hp hv]
   rw [sum_sdiff_eq_sub (source_subset q p v r hp hv),card_sdiff_of_subset (source_subset q p v r hp hv)]
   unfold W C
@@ -182,5 +182,62 @@ theorem survivors_terminal (q p v r : ℕ) (h : v < p*p) :
       rw [pow_two] at hh
       omega
   · exact fun ⟨hi,hc,hr,hpr⟩ => ⟨hi,hc,hr,Or.inl hpr⟩
+
+theorem count_recurrence (q p v r : ℕ) (hp : p.Prime) (hc : p.Coprime q)
+    (hr : r < q) (hv : p*p ≤ v) :
+    C q p v ((p*r) % q) - C q (p+1) v ((p*r) % q) =
+      C q p (v/p) r - C q p (p-1) r := by
+  unfold C
+  have hi := congrArg Finset.card (removed_image q p v r hp hc hr)
+  rw [card_image_of_injective _ (fun i j h => Nat.eq_of_mul_eq_mul_left hp.pos h),
+    card_sdiff_of_subset (subset_survivors q p v _),
+    source_diff q p v r hp hv,
+    card_sdiff_of_subset (source_subset q p v r hp hv)] at hi
+  exact hi.symm
+
+theorem survivors_skip (q p v r : ℕ) (h : ¬ p.Prime ∨ ¬ p.Coprime q ∨ v < p*p) :
+    survivors q p v r = survivors q (p+1) v r := by
+  apply le_antisymm ?_ (subset_survivors q p v r)
+  intro n hn
+  by_contra hout
+  have hh := (removed_iff q p v r n).mp (mem_sdiff.mpr ⟨hn,hout⟩)
+  have hn2 := (mem_Icc.mp hh.1).1
+  have hnv := (mem_Icc.mp hh.1).2
+  have hprime : p.Prime := hh.2.2.2.2 ▸ Nat.minFac_prime (by omega : n ≠ 1)
+  have hcop : p.Coprime q := by
+    have hd : p ∣ n := by rw [← hh.2.2.2.2]; exact Nat.minFac_dvd n
+    exact hh.2.1.coprime_dvd_left hd
+  have hsq := Nat.minFac_sq_le_self (by omega : 0 < n) hh.2.2.2.1
+  rw [hh.2.2.2.2, pow_two] at hsq
+  rcases h with hnp | hnc | hv
+  · exact hnp hprime
+  · exact hnc hcop
+  · omega
+
+theorem interval_certificate (F : ℕ → ℝ) (hf : Monotone F)
+    (u v n : ℕ) (d L : ℝ)
+    (hu : 8000000000 ≤ u) (hun : u ≤ n) (hnv : n ≤ v)
+    (hd : 0 < d) (hL : 0 < L) (hlog : Real.log (v:ℝ) ≤ L)
+    (hlo : (v:ℝ)/d - (u:ℝ)/(840*L) ≤ F u)
+    (hhi : F v ≤ (u:ℝ)/d + (u:ℝ)/(840*L)) :
+    |F n - (n:ℝ)/d| ≤ (n:ℝ)/(840*Real.log (n:ℝ)) := by
+  have hnpos : (1:ℝ) < n := by exact_mod_cast (show 1 < n by omega)
+  have hlogn : 0 < Real.log (n:ℝ) := Real.log_pos hnpos
+  have hnL : Real.log (n:ℝ) ≤ L :=
+    (Real.log_le_log (by positivity) (by exact_mod_cast hnv)).trans hlog
+  have hbd : (u:ℝ)/(840*L) ≤ (n:ℝ)/(840*Real.log (n:ℝ)) := by
+    calc
+      _ ≤ (n:ℝ)/(840*L) :=
+        div_le_div_of_nonneg_right (by exact_mod_cast hun) (by positivity)
+      _ ≤ _ := div_le_div_of_nonneg_left (by positivity) (by positivity)
+        (mul_le_mul_of_nonneg_left hnL (by norm_num))
+  have h1 : (u:ℝ)/d ≤ (n:ℝ)/d :=
+    div_le_div_of_nonneg_right (by exact_mod_cast hun) hd.le
+  have h2 : (n:ℝ)/d ≤ (v:ℝ)/d :=
+    div_le_div_of_nonneg_right (by exact_mod_cast hnv) hd.le
+  have h3 := hf hun
+  have h4 := hf hnv
+  rw [abs_le]
+  constructor <;> linarith only [hlo,hhi,h1,h2,h3,h4,hbd]
 
 end BmorQuotientSieve
