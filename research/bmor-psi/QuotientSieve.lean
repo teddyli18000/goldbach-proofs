@@ -315,16 +315,15 @@ theorem charError_inversion (q a n : ℕ) [NeZero q] (ha : a.Coprime q) :
       (∑ χ : DirichletCharacter ℂ q, star (χ (a : ZMod q)) * χ (k : ZMod q)) =
         if k % q = a % q then (q.totient : ℂ) else 0 := by
     simp_rw [charStarInv a ha]
-    rw [DirichletCharacter.sum_char_inv_mul_char_eq ℂ hu,
-      ZMod.natCast_eq_natCast_iff']
-    rw [eq_comm]
+    simpa only [ZMod.natCast_eq_natCast_iff', eq_comm] using
+      (DirichletCharacter.sum_char_inv_mul_char_eq ℂ hu (k : ZMod q))
   have hmain :
       (∑ χ : DirichletCharacter ℂ q, star (χ (a : ZMod q)) *
         ∑ k ∈ range (n+1), (ArithmeticFunction.vonMangoldt k : ℂ) * χ (k : ZMod q)) =
       (q.totient : ℂ) * ∑ k ∈ (range (n+1)).filter (fun k => k % q = a % q),
         (ArithmeticFunction.vonMangoldt k : ℂ) := by
     simp_rw [mul_sum]
-    rw [sum_comm, mul_sum, sum_filter]
+    rw [sum_comm, sum_filter]
     apply sum_congr rfl
     intro k _
     calc
