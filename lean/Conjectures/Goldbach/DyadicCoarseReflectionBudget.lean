@@ -166,7 +166,7 @@ private theorem finiteParseval (m : ℕ) [NeZero m] (S : Finset ℕ)
     simp_rw [hca]
     have h := DirichletCharacter.sum_char_inv_mul_char_eq ℂ
       ((ZMod.isUnit_iff_coprime a m).mpr (hS a ha).2) (b : ZMod m)
-    rw [h, ZMod.natCast_eq_natCast_iff', Nat.mod_eq_of_lt (hS a ha).1,
+    simp only [h, ZMod.natCast_eq_natCast_iff', Nat.mod_eq_of_lt (hS a ha).1,
       Nat.mod_eq_of_lt (hS b hb).1]
   have hex (χ : DirichletCharacter ℂ m) :
       star (T χ) * T χ = ∑ a ∈ S, ∑ b ∈ S,
@@ -227,12 +227,12 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
   let D (r : ℕ) : ℝ := A r - A (r+q)
   let O := (range q).filter Odd
   let S := (range m).filter Odd
-  let g (r : ℕ) : ℝ := if r<q then D r else -D (r-q)
+  let g (r : ℕ) : ℝ := if r < q then D r else -D (r-q)
   let T (χ : DirichletCharacter ℂ m) := ∑ a ∈ S, (g a : ℂ)*χ (a : ZMod m)
   let U (χ : DirichletCharacter ℂ m) := ∑ a ∈ range m, (A a : ℂ)*χ (a : ZMod m)
   have hcop (a : ℕ) (ha : Odd a) : a.Coprime m := by
     exact Nat.Coprime.pow_right (k+1) ha.coprime_two_right
-  have hodd (a : ℕ) (ha : a ∈ S) : a<m ∧ a.Coprime m :=
+  have hodd (a : ℕ) (ha : a ∈ S) : a < m ∧ a.Coprime m :=
     ⟨mem_range.mp (mem_filter.mp ha).1, hcop a (mem_filter.mp ha).2⟩
   have hgs : (∑ a ∈ S, g a ^ 2) = 2 * ∑ a ∈ O, D a ^ 2 := by
     change (∑ a ∈ (range m).filter Odd, g a ^ 2) = _
@@ -244,7 +244,7 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
     have h2 : (∑ a ∈ O, g (a+q)^2) = ∑ a ∈ O, D a ^ 2 := by
       apply sum_congr rfl
       intro a ha
-      simp [g, show ¬ a+q<q by omega, show a+q-q=a by omega]
+      simp [g, show ¬ a+q < q by omega, show a+q-q=a by omega]
     change (∑ a ∈ O, g a ^ 2) + (∑ a ∈ O, g (a+q)^2) = _
     rw [h1,h2]
     ring
@@ -281,7 +281,7 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
     rw [← sum_add_distrib]
     apply sum_congr rfl
     intro a ha
-    simp [g, mem_range.mp (mem_filter.mp ha).1, show ¬ a+q<q by omega,
+    simp [g, mem_range.mp (mem_filter.mp ha).1, show ¬ a+q < q by omega,
       show a+q-q=a by omega] <;> ring
   have hUodd (χ : DirichletCharacter ℂ m) :
       U χ = ∑ a ∈ S, (A a : ℂ)*χ (a : ZMod m) := by
@@ -294,7 +294,7 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
     · have hnu : ¬ IsUnit (a : ZMod m) := by
         rw [ZMod.isUnit_iff_coprime]
         intro hc
-        have h2 : a.Coprime 2 := (Nat.coprime_pow_right_iff (by omega : 0<k+1) a 2).mp hc
+        have h2 : a.Coprime 2 := (Nat.coprime_pow_right_iff (by omega : 0 < k+1) a 2).mp hc
         exact ho (by simpa [Nat.coprime_two_right] using h2)
       simp [ho, χ.map_nonunit hnu]
   have hU (χ : DirichletCharacter ℂ m) :
@@ -367,8 +367,7 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
   have hcard : Fintype.card (DirichletCharacter ℂ m) = m.totient := by
     rw [← Nat.card_eq_fintype_card]
     exact DirichletCharacter.card_eq_totient_of_hasEnoughRootsOfUnity ℂ m
-  have hsum : (∑ χ : DirichletCharacter ℂ m, ‖T χ‖^2) ≤
-      (m.totient : ℝ)*(2*B)^2 := by
+  have hsum : (∑ χ : DirichletCharacter ℂ m, ‖T χ‖^2) ≤ (m.totient : ℝ)*(2*B)^2 := by
     calc
       _ ≤ ∑ _ : DirichletCharacter ℂ m, (2*B)^2 :=
         sum_le_sum fun χ _ => pow_le_pow_left₀ (norm_nonneg _) (hTb χ) 2
@@ -399,7 +398,7 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
         rintro ⟨_,hmod,hp⟩
         rcases hp.eq_two_or_odd with he | ho
         · subst n
-          rw [Nat.mod_eq_of_lt (by omega : 2<m)] at hmod
+          rw [Nat.mod_eq_of_lt (by omega : 2 < m)] at hmod
           exact h hmod.symm
         · have hh := Nat.mod_mod_of_dvd n (show 2 ∣ m by rw [hm]; exact dvd_mul_right 2 q)
           rw [hmod,Nat.even_iff.mp ha] at hh
@@ -410,7 +409,7 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
     split_ifs <;> simp
   have hEvenE : (∑ a ∈ (range q).filter Even, D a^2) ≤ (Real.log 2)^2 := by
     have hpoint (a : ℕ) (ha : a ∈ (range q).filter Even) :
-        D a^2 = if a=2%q then (Real.log 2)^2 else 0 := by
+        D a^2 = if a=2 % q then (Real.log 2)^2 else 0 := by
       obtain ⟨hal,hae⟩ := mem_filter.mp ha
       have halt := mem_range.mp hal
       dsimp only [D]
@@ -420,13 +419,13 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
           have hm := Nat.even_iff.mp hae
           omega
         simp [he,ha0]
-      · have hqt : 2<q := by omega
+      · have hqt : 2 < q := by omega
         rw [Nat.mod_eq_of_lt hqt,if_neg (show a+q≠2 by omega)]
         by_cases ha2 : a=2 <;> simp [ha2]
     calc
-      _ = ∑ a ∈ (range q).filter Even, if a=2%q then (Real.log 2)^2 else 0 :=
+      _ = ∑ a ∈ (range q).filter Even, if a=2 % q then (Real.log 2)^2 else 0 :=
         sum_congr rfl hpoint
-      _ ≤ ∑ a ∈ range q, if a=2%q then (Real.log 2)^2 else 0 := by
+      _ ≤ ∑ a ∈ range q, if a=2 % q then (Real.log 2)^2 else 0 := by
         apply sum_le_sum_of_subset_of_nonneg (filter_subset _ _)
         intro a ha hb
         split_ifs <;> positivity
@@ -441,17 +440,17 @@ private theorem layerEnergy (N k : ℕ) (hN : 4 ≤ N) (hk : 1 ≤ k) (B : ℝ) 
     rw [hsplit]
     linarith only [hoddE,hEvenE])
  
-private theorem reflectBound (N q : ℕ) (hq : 0<q) (D : ℕ → ℝ) :
-    |∑ r ∈ range q, (if (N+2*q-r) % (2*q)<q then (1:ℝ) else -1)*D r*D ((N+q-r)%q)| ≤
+private theorem reflectBound (N q : ℕ) (hq : 0 < q) (D : ℕ → ℝ) :
+    |∑ r ∈ range q, (if (N+2*q-r) % (2*q) < q then (1:ℝ) else -1)*D r*D ((N+q-r) % q)| ≤
       ∑ r ∈ range q,D r^2 := by
-  let ρ (r : ℕ) := (N+q-r)%q
+  let ρ (r : ℕ) := (N+q-r) % q
   have hlt (r : ℕ) : ρ r < q := Nat.mod_lt _ hq
-  have hi (r : ℕ) (hr : r<q) : ρ (ρ r)=r := by
+  have hi (r : ℕ) (hr : r < q) : ρ (ρ r)=r := by
     have hd := Nat.mod_add_div (N+q-r) q
     have he : N+q-ρ r = r + q*((N+q-r)/q) := by
-      change N+q-(N+q-r)%q = _
+      change N+q-(N+q-r) % q = _
       omega
-    change (N+q-ρ r)%q=r
+    change (N+q-ρ r) % q=r
     rw [he,Nat.add_mul_mod_self_left,Nat.mod_eq_of_lt hr]
   have hs : (∑ r ∈ range q,D (ρ r)^2) = ∑ r ∈ range q,D r^2 := by
     apply sum_bij (fun r _ => ρ r)
@@ -464,18 +463,19 @@ private theorem reflectBound (N q : ℕ) (hq : 0<q) (D : ℕ → ℝ) :
     · intros
       rfl
   calc
-    _ ≤ ∑ r ∈ range q, |(if (N+2*q-r)%(2*q)<q then (1:ℝ) else -1)*D r*D (ρ r)| :=
+    _ ≤ ∑ r ∈ range q, |(if (N+2*q-r) % (2*q) < q then (1:ℝ) else -1)*D r*D (ρ r)| :=
       abs_sum_le_sum_abs _ _
     _ ≤ ∑ r ∈ range q, (D r^2+D (ρ r)^2)/2 := by
       apply sum_le_sum
       intro r hr
       rw [abs_mul,abs_mul]
-      have he : |(if (N+2*q-r)%(2*q)<q then (1:ℝ) else -1)|=1 := by split_ifs <;> norm_num
+      have he : |(if (N+2*q-r) % (2*q) < q then (1:ℝ) else -1)|=1 := by split_ifs <;> norm_num
       rw [he,one_mul]
       have hp := sq_nonneg (|D r|-|D (ρ r)|)
-      rw [sq_sub, sq_abs,sq_abs] at hp
-      linarith only [hp]
-    _ = _ := by rw [sum_div,sum_add_distrib,hs]; ring
+      have he1 : |D r|^2 = D r^2 := sq_abs _
+      have he2 : |D (ρ r)|^2 = D (ρ r)^2 := sq_abs _
+      nlinarith only [hp, he1, he2]
+    _ = _ := by rw [← sum_div,sum_add_distrib,hs]; ring
 
 private theorem geometric (K : ℕ) :
     (∑ k ∈ range K, (2:ℝ)^k) = 2^K-1 := by
@@ -497,16 +497,15 @@ theorem Conjectures.Goldbach.DyadicCoarseReflectionBudget :
         let q : ℕ := 2^k
         let D := fun r : ℕ => A (2*q) r - A (2*q) (r+q)
         |(q : ℝ) / ((2^K : ℕ) : ℝ) * ∑ r ∈ Finset.range q,
-          (if (N+2*q-r) % (2*q) < q then (1 : ℝ) else -1) * D r * D ((N+q-r)%q)|) ≤
-        4 * C^2 * Q * (Real.log (2*N : ℝ))^4 + (Real.log 2)^2 := by
+          (if (N+2*q-r) % (2*q) < q then (1 : ℝ) else -1) * D r * D ((N+q-r) % q)|) ≤ 4 * C^2 * Q * (Real.log (2*N : ℝ))^4 + (Real.log 2)^2 := by
   intro N K Q C hN hNe hNK hQ hQN hC H
   dsimp only
   let B := C * Real.sqrt (N : ℝ) * (Real.log (2*N : ℝ))^2
   let M : ℝ := ((2^K : ℕ) : ℝ)
-  let S := (range K).filter (fun k => 1≤k ∧ (2^k : ℝ)≤Q)
-  have hM : 0<M := by positivity
-  have hB : 0≤B := by positivity
-  have hN' : (N:ℝ)<M := by exact_mod_cast hNK
+  let S := (range K).filter (fun k => 1 ≤ k ∧ (2^k : ℝ) ≤ Q)
+  have hM : 0 < M := by positivity
+  have hB : 0 ≤ B := by positivity
+  have hN' : (N:ℝ) < M := by dsimp only [M]; exact_mod_cast hNK
   let w := fun n : ℕ => if n.Prime then Real.log (n : ℝ) else 0
   let A := fun (d r : ℕ) => ∑ n ∈ (range (N+1)).filter (fun n => n % d=r), w n
   have hA (d r : ℕ) : A d r =
@@ -530,9 +529,9 @@ theorem Conjectures.Goldbach.DyadicCoarseReflectionBudget :
     · have hs : S=∅ := not_nonempty_iff_eq_empty.mp he
       simp [hs,hQ]
   change (∑ k ∈ S, |((2^k:ℕ):ℝ)/M * ∑ r ∈ range (2^k),
-      (if (N+2*2^k-r)%(2*2^k)<2^k then (1:ℝ) else -1) *
+      (if (N+2*2^k-r) % (2*2^k) < 2^k then (1:ℝ) else -1) *
       (A (2*2^k) r-A (2*2^k) (r+2^k)) *
-      (A (2*2^k) ((N+2^k-r)%2^k)-A (2*2^k) (((N+2^k-r)%2^k)+2^k))|) ≤ _
+      (A (2*2^k) ((N+2^k-r) % 2^k)-A (2*2^k) (((N+2^k-r) % 2^k)+2^k))|) ≤ _
   calc
     _ ≤ ∑ k ∈ S, (2:ℝ)^k/M * (2*B^2+(Real.log 2)^2) := by
       apply sum_le_sum
@@ -540,15 +539,15 @@ theorem Conjectures.Goldbach.DyadicCoarseReflectionBudget :
       obtain ⟨hkr,hk1,hkQ⟩ := mem_filter.mp hk
       let q : ℕ := 2^k
       let D (r : ℕ) := A (2*q) r-A (2*q) (r+q)
-      have hq : 0<q := by positivity
+      have hq : 0 < q := by positivity
       have hE := layerEnergy N k hN hk1 B hB (H k hk1 (mem_range.mp hkr) hkQ)
       dsimp only at hE
       have hED : (∑ r ∈ range q,D r^2) ≤ 2*B^2+(Real.log 2)^2 := by
         simpa only [D,q,hA] using hE
       have hc := (reflectBound N q hq D).trans hED
-      change |(q:ℝ)/M * ∑ r ∈ range q, (if (N+2*q-r)%(2*q)<q then (1:ℝ) else -1)*D r*D ((N+q-r)%q)| ≤ _
-      rw [abs_mul,abs_of_nonneg (by positivity : 0≤(q:ℝ)/M)]
-      simpa only [q,Nat.cast_pow,Nat.cast_ofNat] using mul_le_mul_of_nonneg_left hc (by positivity : 0≤(q:ℝ)/M)
+      change |(q:ℝ)/M * ∑ r ∈ range q, (if (N+2*q-r) % (2*q) < q then (1:ℝ) else -1)*D r*D ((N+q-r) % q)| ≤ _
+      rw [abs_mul,abs_of_nonneg (by positivity : 0 ≤ (q:ℝ)/M)]
+      simpa only [q,Nat.cast_pow,Nat.cast_ofNat] using mul_le_mul_of_nonneg_left hc (by positivity : 0 ≤ (q:ℝ)/M)
     _ = (∑ k ∈ S,(2:ℝ)^k)/M * (2*B^2+(Real.log 2)^2) := by
       rw [← sum_mul,← sum_div]
     _ ≤ _ := by
@@ -560,7 +559,7 @@ theorem Conjectures.Goldbach.DyadicCoarseReflectionBudget :
           ring
         rw [hBsq]
         have hratio : (N:ℝ)/M ≤ 1 := (div_le_one hM).mpr hN'.le
-        have hs0 : 0≤(∑ k ∈ S,(2:ℝ)^k) := sum_nonneg fun _ _ => by positivity
+        have hs0 : 0 ≤ (∑ k ∈ S,(2:ℝ)^k) := sum_nonneg fun _ _ => by positivity
         calc
           _ = (∑ k ∈ S,(2:ℝ)^k)*((N:ℝ)/M)*(2*C^2*(Real.log (2*N:ℝ))^4) := by ring
           _ ≤ (2*Q)*1*(2*C^2*(Real.log (2*N:ℝ))^4) := by
