@@ -240,4 +240,43 @@ theorem interval_certificate (F : ℕ → ℝ) (hf : Monotone F)
   rw [abs_le]
   constructor <;> linarith only [hlo,hhi,h1,h2,h3,h4,hbd]
 
+/-- Rational logarithm enclosure used in the fixed-point numerical certificate. -/
+theorem log_series32 (u : ℝ) (hu : 0 ≤ u) (hu' : u ≤ 1/3) :
+    let T := ∑ k ∈ range 32, (2:ℝ)*(1/(2*(k:ℝ)+1))*u^(2*k+1)
+    T ≤ Real.log (1+u)-Real.log (1-u) ∧
+      Real.log (1+u)-Real.log (1-u) ≤ T+1/(2:ℝ)^60 := by
+  dsimp only
+  let f (k : ℕ) := (2:ℝ)*(1/(2*(k:ℝ)+1))*u^(2*k+1)
+  have hs : HasSum f (Real.log (1+u)-Real.log (1-u)) :=
+    Real.hasSum_log_sub_log_of_abs_lt_one (by rw [abs_of_nonneg hu]; linarith)
+  have ht : Summable (fun k => f (k+32)) := (summable_nat_add_iff 32).mpr hs.summable
+  have hsplit := hs.summable.sum_add_tsum_nat_add 32
+  rw [hs.tsum_eq] at hsplit
+  have htail0 : 0 ≤ ∑' k : ℕ, f (k+32) := tsum_nonneg (by intro k; dsimp [f]; positivity)
+  let g (k : ℕ) : ℝ := (2*(1/3)^65) * (1/9)^k
+  have hg0 : HasSum (fun k : ℕ => (1/9:ℝ)^k) (1-(1/9:ℝ))⁻¹ :=
+    hasSum_geometric_of_norm_lt_one (by norm_num)
+  have hg : HasSum g ((2*(1/3)^65)*((1-(1/9:ℝ))⁻¹)) := hg0.mul_left _
+  have hterm (k : ℕ) : f (k+32) ≤ g k := by
+    unfold f g
+    have hd : 1 ≤ 2*((k+32:ℕ):ℝ)+1 := by positivity
+    have hf : (1:ℝ)/(2*((k+32:ℕ):ℝ)+1) ≤ 1 :=
+      (div_le_one (by positivity)).2 hd
+    calc
+      _ ≤ 2*u^(2*(k+32)+1) := by
+        have h := mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hf (by norm_num : (0:ℝ) ≤ 2))
+          (pow_nonneg hu _)
+        simpa only [mul_one] using h
+      _ ≤ 2*(1/3:ℝ)^(2*(k+32)+1) :=
+        mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hu hu' _) (by norm_num)
+      _ = _ := by
+        rw [show 2*(k+32)+1=65+2*k by omega,pow_add,pow_mul]
+        norm_num
+  have ht' : (∑' k : ℕ, f (k+32)) ≤ (2*(1/3)^65)*((1-(1/9:ℝ))⁻¹) := by
+    rw [← hg.tsum_eq]
+    exact ht.tsum_le_tsum hterm hg.summable
+  have hsmall : (2*(1/3:ℝ)^65)*((1-(1/9:ℝ))⁻¹) ≤ 1/(2:ℝ)^60 := by norm_num
+  change (∑ k ∈ range 32, f k) ≤ _ ∧ _ ≤ (∑ k ∈ range 32, f k)+_
+  constructor <;> linarith only [hsplit,htail0,ht',hsmall]
+
 end BmorQuotientSieve
