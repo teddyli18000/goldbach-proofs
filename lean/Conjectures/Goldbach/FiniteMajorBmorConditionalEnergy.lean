@@ -544,7 +544,8 @@ private theorem threeRanges (h : BMOR) (q a n : ℕ) (β : ℝ)
           (Real.log_le_log (by norm_num) (by exact_mod_cast hmt))
         exact (prefixBound h q a m hq hq' ha hc hmt 22 (by norm_num) hlog).trans
           (div_le_div_of_nonneg_right (by exact_mod_cast hml.le) (by norm_num))
-      _ = ((L-T:ℕ):ℝ)*((L:ℝ)/(840*22)) := by simp [Nat.card_Ico]
+      _ = ((L-T:ℕ):ℝ)*((L:ℝ)/(840*22)) := by
+        simp only [sum_const, Nat.card_Ico, nsmul_eq_mul]
       _ ≤ _ := by
         have hlt : ((L-T:ℕ):ℝ) ≤ L := by exact_mod_cast Nat.sub_le L T
         calc
@@ -914,7 +915,7 @@ private theorem energyPoint (h : BMOR) (n q : ℕ) (β : ℝ)
       have h3 := mul_le_mul_of_nonneg_right hφ (show 0 ≤ (B n β+9*δ n)^2-(B n β)^2 by linarith [h2,sq_nonneg (δ n)])
       nlinarith only [h0,h2,h3]
     have hcomp : B n β+9*δ n ≤ (n:ℝ)*a q+c q*(22/7)* |β| *(n:ℝ)^2/(840*34) := by
-      simpa [c,hsmall] using affineCompare n q β hnp hqp
+      simpa [c,hsmall,show (10:ℝ)-1=9 by norm_num] using affineCompare n q β hnp hqp
     calc
       _ = ∑ i ∈ A q, ‖∑ r ∈ range q, F n q r β*ph q i r‖^2 := by
         apply sum_congr rfl
