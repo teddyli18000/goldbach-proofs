@@ -93,9 +93,13 @@ private theorem mobiusMask (n u : ℕ) (hn : 0 < n) :
   have hg : 0 < Nat.gcd u n := Nat.gcd_pos_of_pos_right u hn
   have hs : n.divisors.filter (fun c => c ∣ u) = (Nat.gcd u n).divisors := by
     ext c
-    simp only [Finset.mem_filter, Nat.mem_divisors, hn.ne', hg.ne', and_true]
-    exact ⟨fun h => Nat.dvd_gcd h.2 h.1,
-      fun h => ⟨h.trans (Nat.gcd_dvd_right u n), h.trans (Nat.gcd_dvd_left u n)⟩⟩
+    simp only [Finset.mem_filter, Nat.mem_divisors]
+    constructor
+    · rintro ⟨⟨hcn, _⟩, hcu⟩
+      exact ⟨Nat.dvd_gcd hcu hcn, hg.ne'⟩
+    · rintro ⟨hcg, _⟩
+      exact ⟨⟨hcg.trans (Nat.gcd_dvd_right u n), hn.ne'⟩,
+        hcg.trans (Nat.gcd_dvd_left u n)⟩
   rw [← Finset.sum_filter, hs]
   have hm : (∑ c ∈ (Nat.gcd u n).divisors, ArithmeticFunction.moebius c) =
       (if Nat.gcd u n = 1 then 1 else 0 : ℤ) := by
@@ -141,7 +145,7 @@ theorem Conjectures.Goldbach.FareyCoprimeProgressionCount :
         rw [← Finset.sum_filter]
         simp [C, nsmul_eq_mul, mul_comm]
   have ht : (∑ c ∈ n.divisors, mu c * ((n / c : ℕ) : ℝ)) = (n.totient : ℝ) := by
-    have hsum : ∀ k > 0, (∑ j ∈ k.divisors, (j.totient : ℝ)) = (k : ℝ) := by
+    have hsum : ∀ (k : ℕ), 0 < k → (∑ j ∈ k.divisors, (j.totient : ℝ)) = (k : ℝ) := by
       intro k hk
       exact_mod_cast Nat.sum_totient k
     have hm := (ArithmeticFunction.sum_eq_iff_sum_mul_moebius_eq
