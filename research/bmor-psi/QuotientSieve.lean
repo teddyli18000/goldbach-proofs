@@ -279,4 +279,100 @@ theorem log_series32 (u : ℝ) (hu : 0 ≤ u) (hu' : u ≤ 1/3) :
   change (∑ k ∈ range 32, f k) ≤ _ ∧ _ ≤ (∑ k ∈ range 32, f k)+_
   constructor <;> linarith only [hsplit,htail0,ht',hsmall]
 
+/-- Character discrepancy, with the principal pole term subtracted exactly. -/
+noncomputable def charError (q n : ℕ) (χ : DirichletCharacter ℂ q) : ℂ :=
+  (∑ k ∈ range (n+1), (ArithmeticFunction.vonMangoldt k : ℂ) * χ (k : ZMod q)) -
+    (if χ = 1 then (n : ℂ) else 0)
+
+private theorem charStarInv {q : ℕ} [NeZero q] (a : ℕ) (ha : a.Coprime q)
+    (χ : DirichletCharacter ℂ q) :
+    star (χ (a : ZMod q)) = χ ((a : ZMod q)⁻¹) := by
+  rw [← ZMod.coe_unitOfCoprime a ha]
+  rw [MulChar.star_apply', MulChar.inv_apply, Ring.inverse_unit, ZMod.inv_coe_unit]
+
+private theorem charUnitNorm {q : ℕ} [NeZero q] (a : ℕ) (ha : a.Coprime q)
+    (χ : DirichletCharacter ℂ q) : ‖star (χ (a : ZMod q))‖ = 1 := by
+  have hu := (ZMod.isUnit_iff_coprime a q).mpr ha
+  have he : star (χ (a : ZMod q)) * χ (a : ZMod q) = 1 := by
+    rw [charStarInv a ha χ, ← map_mul]
+    have hh : ((a : ZMod q)⁻¹) * (a : ZMod q) = 1 :=
+      (ZMod.inv_mul_eq_one_of_isUnit hu _).2 rfl
+    rw [hh, map_one]
+  have hn := congrArg (fun z : ℂ => ‖z‖) he
+  simp only [norm_mul, norm_star, norm_one] at hn
+  rw [norm_star]
+  nlinarith [norm_nonneg (χ (a : ZMod q))]
+
+/-- Exact finite inversion for the centered Mangoldt sum. -/
+theorem charError_inversion (q a n : ℕ) [NeZero q] (ha : a.Coprime q) :
+    (∑ χ : DirichletCharacter ℂ q, star (χ (a : ZMod q)) * charError q n χ) =
+      (q.totient : ℂ) *
+        (∑ k ∈ (range (n+1)).filter (fun k => k % q = a % q),
+          (ArithmeticFunction.vonMangoldt k : ℂ)) - (n : ℂ) := by
+  classical
+  have hu := (ZMod.isUnit_iff_coprime a q).mpr ha
+  have hk (k : ℕ) :
+      (∑ χ : DirichletCharacter ℂ q, star (χ (a : ZMod q)) * χ (k : ZMod q)) =
+        if k % q = a % q then (q.totient : ℂ) else 0 := by
+    simp_rw [charStarInv a ha]
+    rw [DirichletCharacter.sum_char_inv_mul_char_eq ℂ hu,
+      ZMod.natCast_eq_natCast_iff']
+    rw [eq_comm]
+  have hmain :
+      (∑ χ : DirichletCharacter ℂ q, star (χ (a : ZMod q)) *
+        ∑ k ∈ range (n+1), (ArithmeticFunction.vonMangoldt k : ℂ) * χ (k : ZMod q)) =
+      (q.totient : ℂ) * ∑ k ∈ (range (n+1)).filter (fun k => k % q = a % q),
+        (ArithmeticFunction.vonMangoldt k : ℂ) := by
+    simp_rw [mul_sum]
+    rw [sum_comm, mul_sum, sum_filter]
+    apply sum_congr rfl
+    intro k _
+    calc
+      _ = (ArithmeticFunction.vonMangoldt k : ℂ) *
+          ∑ χ : DirichletCharacter ℂ q, star (χ (a : ZMod q)) * χ (k : ZMod q) := by
+        rw [mul_sum]
+        apply sum_congr rfl
+        intro χ _
+        ring
+      _ = _ := by rw [hk]; split_ifs <;> ring
+  have hpole :
+      (∑ χ : DirichletCharacter ℂ q, star (χ (a : ZMod q)) *
+        (if χ = 1 then (n : ℂ) else 0)) = (n : ℂ) := by
+    rw [sum_eq_single (1 : DirichletCharacter ℂ q)]
+    · simp [MulChar.one_apply hu]
+    · intro χ _ hχ
+      simp [hχ]
+    · simp
+  simp only [charError, mul_sub, sum_sub_distrib]
+  rw [hmain, hpole]
+
+/-- Sharp transfer: only the average of the individual analytic bounds is needed. -/
+theorem charError_to_AP (q a n : ℕ) [NeZero q] (ha : a.Coprime q) (B : ℝ)
+    (h : (∑ χ : DirichletCharacter ℂ q, ‖charError q n χ‖) ≤ (q.totient : ℝ) * B) :
+    |(∑ k ∈ (range (n+1)).filter (fun k => k % q = a % q),
+      ArithmeticFunction.vonMangoldt k) - (n : ℝ)/q.totient| ≤ B := by
+  classical
+  have hq : 0 < (q.totient : ℝ) := by
+    exact_mod_cast Nat.totient_pos.mpr (NeZero.pos q)
+  let S : ℝ := ∑ k ∈ (range (n+1)).filter (fun k => k % q = a % q),
+    ArithmeticFunction.vonMangoldt k
+  have he :
+      (∑ χ : DirichletCharacter ℂ q, star (χ (a : ZMod q)) * charError q n χ) =
+        ((q.totient : ℝ) * S - (n : ℝ) : ℝ) := by
+    rw [charError_inversion q a n ha]
+    simp only [S, Complex.ofReal_sub, Complex.ofReal_mul, Complex.ofReal_natCast,
+      Complex.ofReal_sum]
+  have hn := norm_sum_le (s := (univ : Finset (DirichletCharacter ℂ q)))
+      (f := fun χ => star (χ (a : ZMod q)) * charError q n χ)
+  rw [he, Complex.norm_real, Real.norm_eq_abs] at hn
+  simp only [norm_mul, charUnitNorm a ha, one_mul] at hn
+  have hb : |(q.totient : ℝ) * S - (n : ℝ)| ≤ (q.totient : ℝ) * B := hn.trans h
+  have hf : (q.totient : ℝ) * (S - (n : ℝ)/q.totient) =
+      (q.totient : ℝ) * S - (n : ℝ) := by
+    field_simp
+  rw [← hf, abs_mul, abs_of_pos hq] at hb
+  change |S - (n : ℝ)/q.totient| ≤ B
+  by_contra! hbad
+  exact (not_lt_of_ge hb) (mul_lt_mul_of_pos_left hbad hq)
+
 end BmorQuotientSieve
